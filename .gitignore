@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.env
+.env.local
+*.log
+
+# model artifacts (regenerate via train.py)
+model/dataset.csv
+model/*.joblib
+model/status.json
+model/__pycache__/
+*.pyc
+
+.DS_Store

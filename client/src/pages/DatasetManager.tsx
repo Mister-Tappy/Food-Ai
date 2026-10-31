@@ -1,0 +1,10 @@
+import { useState } from "react";
+import { MEALS } from "../data/meals";
+import { useAppStore } from "../store/useAppStore";
+
+export default function DatasetManager() {
+  const mealHistory = useAppStore((state) => state.mealHistory);
+  const [query, setQuery] = useState("");
+  const meals = MEALS.filter((meal) => `${meal.name} ${meal.nameTh} ${meal.category} ${meal.cuisines.join(" ")}`.toLowerCase().includes(query.toLowerCase()));
+  return <div className="flex flex-col gap-5"><div><h1 className="text-2xl font-extrabold">Dataset manager</h1><p className="text-sm text-muted">Safe read-only view of internal meals and real completion events</p></div><div className="grid sm:grid-cols-3 gap-3"><div className="card p-4"><strong className="text-2xl">{MEALS.length}</strong><span className="block text-xs text-muted">meal definitions</span></div><div className="card p-4"><strong className="text-2xl">{mealHistory.length}</strong><span className="block text-xs text-muted">completed meal events</span></div><div className="card p-4"><strong className="text-2xl">0</strong><span className="block text-xs text-muted">fabricated restaurants</span></div></div><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Filter meals" aria-label="Filter meal dataset" className="border border-slate-200 rounded px-3 py-2 bg-surface max-w-sm" /><div className="card overflow-x-auto"><table className="w-full text-sm"><thead className="bg-subtle text-left"><tr><th className="p-3">ID</th><th className="p-3">Thai name</th><th className="p-3">Category</th><th className="p-3">Tastes</th><th className="p-3">Typical estimate</th><th className="p-3">Search terms</th></tr></thead><tbody>{meals.map((meal) => <tr key={meal.id} className="border-t border-slate-100"><td className="p-3 font-mono text-xs">{meal.id}</td><td className="p-3 font-bold">{meal.nameTh}</td><td className="p-3">{meal.category}</td><td className="p-3">{meal.tastes.join(", ")}</td><td className="p-3">฿{meal.priceRange[0]}–{meal.priceRange[1]}</td><td className="p-3 text-xs text-muted">{meal.restaurantSearchTerms.join(", ")}</td></tr>)}</tbody></table></div></div>;
+}

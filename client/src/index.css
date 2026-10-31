@@ -1,0 +1,190 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =========================================================
+   THEME TOKENS
+   Light values by default; `.dark` on <html> (toggled in Sidebar,
+   see src/lib/theme.ts) swaps every variable at once. Tailwind's
+   `primary`/`ink`/`surface`/`bg`/`muted`/`slate.*` tokens all read
+   from these (see tailwind.config.js), so most of the app re-themes
+   automatically without per-component dark: classes.
+   ========================================================= */
+:root {
+  --color-primary: #cc8a3e;
+  --color-primary-dark: #b3762f;
+  --color-primary-light: #fbecd2;
+
+  --color-ink: #211c16;
+  --color-ink-light: #4a4136;
+
+  --color-bg: #faf6ef;
+  --color-surface-rgb: 255 255 255;
+  --color-muted: #8a8072;
+  --color-subtle: #f4efe5;
+  --color-border: #ece4d6;
+  --color-border-strong: #ddd2bd;
+}
+
+:root[data-reward-theme="theme-mint"] {
+  --color-primary: #4f9278;
+  --color-primary-dark: #36725d;
+  --color-primary-light: #dff2e9;
+}
+
+:root[data-reward-theme="theme-berry"] {
+  --color-primary: #a85574;
+  --color-primary-dark: #873d5b;
+  --color-primary-light: #f8dfe8;
+}
+
+.dark {
+  --color-primary: #e0a24f;
+  --color-primary-dark: #f0b566;
+  --color-primary-light: rgba(224, 162, 79, 0.18);
+
+  --color-ink: #f3ede1;
+  --color-ink-light: #cbc0ac;
+
+  --color-bg: #17130f;
+  --color-surface-rgb: 34 29 23;
+  --color-muted: #a89a85;
+  --color-subtle: #2b241c;
+  --color-border: #362e24;
+  --color-border-strong: #46392a;
+}
+
+@layer base {
+  :focus-visible {
+    outline: 2px solid theme("colors.primary.DEFAULT");
+    outline-offset: 2px;
+  }
+  body {
+    @apply bg-bg text-ink;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-5 py-3 font-bold transition;
+  }
+  .btn-primary {
+    @apply bg-primary text-white shadow-soft hover:bg-primary-dark hover:shadow-hover hover:-translate-y-0.5;
+  }
+  .btn-dark {
+    @apply bg-ink text-white shadow-soft hover:opacity-90 hover:shadow-hover hover:-translate-y-0.5;
+  }
+  .btn-ghost {
+    @apply bg-transparent text-primary border border-primary-light;
+  }
+  .card {
+    @apply bg-surface border border-slate-200 rounded-lg shadow-soft;
+  }
+  .chip {
+    @apply border border-slate-200 bg-surface text-muted px-4 py-2 rounded-full text-sm font-semibold cursor-pointer transition hover:-translate-y-0.5;
+  }
+  .chip-active {
+    @apply bg-primary-light border-primary text-primary-dark;
+  }
+  .badge {
+    @apply inline-flex items-center gap-1 text-xs font-bold px-2.5 py-0.5 rounded-full;
+  }
+}
+
+/* ---- App shell: sidebar + top bar (see Sidebar.tsx / TopBar.tsx) ---- */
+.sidebar-link {
+  @apply flex items-center gap-3 px-3.5 py-2.5 rounded-md text-sm font-semibold text-muted transition;
+}
+.sidebar-link:hover {
+  @apply bg-subtle text-ink;
+}
+.sidebar-link-active {
+  @apply bg-primary-light text-primary-dark;
+}
+.bg-subtle {
+  background-color: var(--color-subtle);
+}
+
+/* A fixed dark promotional surface. `bg-ink` intentionally follows the
+   foreground token, so it becomes light in dark mode and cannot be used here. */
+.hero-dark {
+  background: linear-gradient(135deg, #211c16 0%, #35291d 100%);
+}
+.dark .hero-dark {
+  background: linear-gradient(135deg, #0f0c09 0%, #21190f 100%);
+}
+
+/* Font Awesome replaces the old emoji set; icons alone use a quiet gray palette. */
+.svg-inline--fa {
+  color: #73737d;
+}
+.dark .svg-inline--fa {
+  color: #a1a1aa;
+}
+.btn-primary .svg-inline--fa,
+.btn-dark .svg-inline--fa,
+.bg-primary .svg-inline--fa,
+.bg-ink .svg-inline--fa {
+  color: #e4e4e7;
+}
+
+/* ---- Leaflet map markers (LeafletMapView) ---- */
+.map-pin {
+  width: 22px;
+  height: 22px;
+  border-radius: 50% 50% 50% 0;
+  background: var(--pin-color, #cc8a3e);
+  transform: rotate(-45deg);
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
+  margin: 6px 0 0 2px;
+}
+.map-pin-pulse {
+  animation: map-pin-bounce 0.6s ease-in-out infinite alternate;
+}
+@keyframes map-pin-bounce {
+  from {
+    transform: rotate(-45deg) translateY(0);
+  }
+  to {
+    transform: rotate(-45deg) translateY(-6px);
+  }
+}
+.map-origin-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #7c3aed;
+  border: 3px solid white;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.35);
+}
+.map-locate-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #cc8a3e;
+  border: 3px solid white;
+  box-shadow: 0 0 0 6px rgba(204, 138, 62, 0.25);
+}
+.map-popup {
+  font-family: inherit;
+  min-width: 160px;
+}
+.map-popup-title {
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.map-popup-meta {
+  font-size: 12px;
+  color: #8a8072;
+  margin-bottom: 6px;
+}
+.map-popup-link {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #cc8a3e;
+  text-decoration: underline;
+  margin-right: 10px;
+}

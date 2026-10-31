@@ -1,0 +1,9 @@
+import { REWARDS } from "../lib/gamification";
+import { useAppStore } from "../store/useAppStore";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCheck, faCoins, faGift } from "@fortawesome/free-solid-svg-icons";
+
+export default function Rewards() {
+  const { coins, unlockedRewardIds, activeTheme, unlockReward, setActiveTheme } = useAppStore();
+  return <div className="flex flex-col gap-5"><div className="flex justify-between"><div><h1 className="text-2xl font-extrabold">Reward store</h1><p className="text-sm text-muted">Cosmetic rewards only—no real money</p></div><span className="badge bg-primary-light text-primary-dark h-fit"><FontAwesomeIcon icon={faCoins} className="mr-1" />{coins}</span></div><div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">{REWARDS.map((reward) => { const owned = unlockedRewardIds.includes(reward.id); return <article key={reward.id} className="card p-5"><div className="w-12 h-12 rounded-full bg-primary-light flex items-center justify-center"><FontAwesomeIcon icon={faGift} /></div><h2 className="font-bold mt-3">{reward.name}</h2><p className="text-sm text-muted mt-1 min-h-10">{reward.description}</p><div className="flex items-center justify-between mt-4"><span className="font-bold"><FontAwesomeIcon icon={faCoins} className="mr-1" />{reward.cost}</span>{owned ? reward.type === "theme" ? <button type="button" onClick={() => setActiveTheme(reward.id)} className="btn btn-ghost text-xs">{activeTheme === reward.id ? <><FontAwesomeIcon icon={faCheck} />Active</> : "Use theme"}</button> : <span className="badge bg-success/10 text-success">Owned</span> : <button type="button" disabled={coins < reward.cost} onClick={() => unlockReward(reward)} className="btn btn-primary text-xs disabled:opacity-50">Unlock</button>}</div></article>; })}</div></div>;
+}

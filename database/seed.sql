@@ -1,0 +1,3 @@
+-- No restaurant seed data by design.
+-- Restaurants shown in the application come only from live OpenStreetMap/Overpass results.
+-- Internal meal knowledge lives in client/src/data/meals.ts and is not geographic venue data.

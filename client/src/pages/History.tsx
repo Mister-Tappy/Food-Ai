@@ -1,0 +1,8 @@
+import { Link } from "react-router-dom";
+import { useAppStore } from "../store/useAppStore";
+import MealArtwork from "../components/MealArtwork";
+
+export default function History() {
+  const mealHistory = useAppStore((state) => state.mealHistory);
+  return <div className="max-w-3xl mx-auto flex flex-col gap-5"><div className="flex items-end justify-between gap-3"><div><h1 className="text-2xl font-extrabold">Meal history</h1><p className="text-sm text-muted">Actual meals you saved as completed</p></div><Link to="/diary" className="btn btn-ghost text-sm">Calendar view</Link></div>{mealHistory.length === 0 ? <div className="card p-10 text-center"><h2 className="font-bold">No completed meals yet</h2><p className="text-sm text-muted mt-1 mb-4">Saving a recommendation or choosing “I ate this” adds it here.</p><Link to="/" className="btn btn-primary">Choose today’s meal</Link></div> : <div className="flex flex-col gap-3">{mealHistory.map((entry) => <article key={entry.id} className="card overflow-hidden grid grid-cols-[96px_1fr]"><MealArtwork meal={entry.meal} className="h-full min-h-28" /><div className="p-4"><div className="flex justify-between gap-3"><div><h2 className="font-bold">{entry.meal.nameTh}</h2><p className="text-xs text-muted">{entry.meal.name} · {entry.recommendationScore}% match</p></div><time className="text-xs text-muted shrink-0">{new Date(entry.completedAt).toLocaleDateString("th-TH", { dateStyle: "medium" })}</time></div><p className="text-sm mt-2">{entry.restaurant ? entry.restaurant.name : "No restaurant selected"}</p><p className="text-xs text-muted mt-1">{entry.locationLabel || "Location not saved"}</p></div></article>)}</div>}</div>;
+}
