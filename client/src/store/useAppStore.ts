@@ -568,7 +568,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     } catch (err) {
       set({
         searching: false,
-        searchError: err instanceof OsmApiError ? err.message : "Failed to search nearby restaurants.",
+        searchError: err instanceof OsmApiError ? `${err.message} Public OSM providers can be busy; wait a minute and try again.` : "Failed to search nearby restaurants.",
       });
     }
   },

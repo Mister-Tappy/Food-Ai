@@ -4,10 +4,10 @@ import type { GeoPoint, LocationSuggestion } from "../types";
 const OVERPASS_ENDPOINTS = [
   "https://overpass-api.de/api/interpreter",
   "https://overpass.private.coffee/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
   "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
 ];
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org";
-const FOOD_SELECTORS = ["amenity=restaurant", "amenity=cafe", "amenity=fast_food", "amenity=food_court", "amenity=pub", "amenity=bar", "shop=bakery", "shop=confectionery"];
 const cooldowns = new Map<string, number>();
 const nearbyCache = new Map<string, RawOsmRestaurant[]>();
 const searchCache = new Map<string, LocationSuggestion[]>();
@@ -33,7 +33,7 @@ function validate(point: GeoPoint): void {
 }
 function query(origin: GeoPoint, radius: number): string {
   const around = `(around:${radius},${origin.lat},${origin.lng})`;
-  return `[out:json][timeout:25];(\n${FOOD_SELECTORS.map((selector) => `nwr[${selector}]${around};`).join("\n")}\n);out center tags;`;
+  return `[out:json][timeout:20];(nwr["amenity"~"^(restaurant|cafe|fast_food|food_court)$"]["name"]${around};nwr["shop"~"^(bakery|confectionery)$"]["name"]${around};);out center tags 120;`;
 }
 async function fetchTimeout(url: string, options: RequestInit = {}, timeout = 12_000): Promise<Response> {
   const controller = new AbortController(); const timer = window.setTimeout(() => controller.abort(), timeout);
@@ -78,7 +78,17 @@ async function overpass(text: string): Promise<OverpassElement[]> {
   const now = Date.now(); const candidates = OVERPASS_ENDPOINTS.filter((url) => (cooldowns.get(url) || 0) <= now); const pool = candidates.length ? candidates : OVERPASS_ENDPOINTS;
   const ordered = pool.slice(nextEndpoint % pool.length).concat(pool.slice(0, nextEndpoint % pool.length)); nextEndpoint = (nextEndpoint + 1) % pool.length;
   for (const endpoint of ordered) {
-    try { const response = await fetchTimeout(`${endpoint}?data=${encodeURIComponent(text)}`, { headers: { Accept: "application/json" } }); if (!response.ok) { cooldowns.set(endpoint, Date.now() + 60_000); continue; } const data = await response.json() as { elements?: OverpassElement[] }; if (Array.isArray(data.elements)) return data.elements; }
+    try {
+      const response = await fetchTimeout(endpoint, {
+        method: "POST",
+        headers: { Accept: "application/json", "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+        body: `data=${encodeURIComponent(text)}`,
+        referrerPolicy: "strict-origin-when-cross-origin",
+      }, 20_000);
+      if (!response.ok) { cooldowns.set(endpoint, Date.now() + 60_000); continue; }
+      const data = await response.json() as { elements?: OverpassElement[] };
+      if (Array.isArray(data.elements)) return data.elements;
+    }
     catch { cooldowns.set(endpoint, Date.now() + 60_000); }
   }
   throw new OsmApiError("Restaurant data is temporarily unavailable. Please try again.", 503);
