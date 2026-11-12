@@ -1,7 +1,5 @@
-import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { api } from "../lib/api";
 import { useAppStore } from "../store/useAppStore";
 import {
   CuisineBadge,
@@ -13,7 +11,7 @@ import {
 import RestaurantPhoto from "../components/RestaurantPhoto";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStore } from "@fortawesome/free-solid-svg-icons";
-import type { ModelStatus, Restaurant, ScoredRestaurant } from "../types";
+import type { Restaurant, ScoredRestaurant } from "../types";
 
 function hasScore(restaurant: Restaurant | ScoredRestaurant): restaurant is ScoredRestaurant {
   return "score" in restaurant;
@@ -106,77 +104,42 @@ function RestaurantTrainingCard({
 
 export default function AITraining() {
   const { restaurants, recommendations } = useAppStore();
-  const [status, setStatus] = useState<ModelStatus | null>(null);
-  const [training, setTraining] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
   const restaurantSamples = (recommendations.length ? recommendations : restaurants).slice(0, 6);
-
-  async function refreshStatus() {
-    const s = await api.getModelStatus();
-    setStatus(s);
-  }
-
-  useEffect(() => {
-    void refreshStatus();
-  }, []);
-
-  async function handleTrain() {
-    setTraining(true);
-    setMessage(null);
-    const result = await api.triggerTrain();
-    setMessage(
-      result.started
-        ? "Training job started. This can take a few minutes — refresh status below to check progress."
-        : "Couldn't reach the training service (backend offline). Run `python model/train.py` locally instead."
-    );
-    setTraining(false);
-    void refreshStatus();
-  }
 
   return (
     <div className="max-w-5xl mx-auto flex flex-col gap-5">
       <div>
         <h1 className="text-2xl font-extrabold">AI Training</h1>
         <p className="text-sm text-muted mt-1">
-          Monitor the model and review the real restaurant context behind recommendation feedback.
+          This GitHub Pages edition uses the explainable recommendation engine directly in your browser.
         </p>
       </div>
 
       <div className="card p-5 max-w-xl">
-        <h2 className="font-bold mb-3">Model status</h2>
+        <h2 className="font-bold mb-3">Recommendation engine</h2>
         <dl className="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <dt className="text-muted">Trained</dt>
-            <dd className="font-semibold">{status?.trained ? "Yes" : "No"}</dd>
+            <dt className="text-muted">Mode</dt>
+            <dd className="font-semibold">Deterministic local scoring</dd>
           </div>
           <div>
-            <dt className="text-muted">Last trained</dt>
-            <dd className="font-semibold">
-              {status?.lastTrainedAt ? new Date(status.lastTrainedAt).toLocaleString() : "Never"}
-            </dd>
+            <dt className="text-muted">Backend required</dt>
+            <dd className="font-semibold">No</dd>
           </div>
           <div>
-            <dt className="text-muted">Validation MAE</dt>
-            <dd className="font-semibold">{status?.validationMae ?? "—"}</dd>
+            <dt className="text-muted">Meal definitions</dt>
+            <dd className="font-semibold">30</dd>
           </div>
           <div>
-            <dt className="text-muted">Dataset rows</dt>
-            <dd className="font-semibold">{status?.datasetRows ?? 0}</dd>
+            <dt className="text-muted">Personalization</dt>
+            <dd className="font-semibold">Saved on this device</dd>
           </div>
         </dl>
       </div>
 
-      <motion.button
-        type="button"
-        onClick={handleTrain}
-        disabled={training}
-        whileTap={{ scale: 0.97 }}
-        className="btn btn-primary disabled:opacity-70 max-w-xl"
-      >
-        {training ? "Starting..." : "Retrain model now"}
-      </motion.button>
-
-      {message && <p className="text-sm text-muted">{message}</p>}
+      <motion.div whileHover={{ y: -1 }} className="card p-4 max-w-xl text-sm text-muted">
+        Preferences, likes, completed meals, stickers, and rewards are stored locally in your browser. There is no server-side training job in this static deployment.
+      </motion.div>
 
       <section>
         <div className="flex items-end justify-between gap-3 mb-3">
@@ -214,10 +177,9 @@ export default function AITraining() {
       </section>
 
       <div className="card p-5 max-w-xl">
-        <h2 className="font-bold mb-2">Nightly retraining</h2>
+        <h2 className="font-bold mb-2">Static deployment</h2>
         <p className="text-sm text-muted">
-          Retraining is available only after a real exported <code>dataset.csv</code> exists.
-          The deterministic meal and restaurant scorers continue to work when no trained model is deployed.
+          GitHub Pages hosts this app as static files. Live venue results come directly from public OpenStreetMap services, while recommendation logic continues to run locally.
         </p>
       </div>
     </div>
