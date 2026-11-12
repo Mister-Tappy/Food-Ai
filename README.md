@@ -111,7 +111,7 @@ The no-login prototype keeps preferences, favorite snapshots, completed meals, d
 
 ## Limitations
 
-- Public Overpass and Nominatim services can be busy despite fallback, caching, and throttling. Browser access also depends on the provider’s CORS policy.
+- Public Overpass and Nominatim services can be busy despite fallback, caching, and throttling. When all Overpass mirrors are unavailable, the static app falls back to Nominatim’s bounded real-venue search; browser access still depends on provider availability and CORS policy.
 - OSM tag completeness varies. Opening hours, cuisine, facilities, address, phone, website, and imagery can be unknown.
 - Exact menu availability and restaurant prices require a separate trustworthy menu provider; this app does not invent them.
 - Local prototype progress does not sync across devices or browsers.

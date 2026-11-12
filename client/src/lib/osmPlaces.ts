@@ -102,10 +102,39 @@ async function nominatim(path: string): Promise<NominatimPlace[] | NominatimPlac
 }
 function suggestion(place: NominatimPlace): LocationSuggestion { return { label: place.display_name, lat: Number(place.lat), lng: Number(place.lon), type: place.type || place.class || "place", osmId: place.osm_type && place.osm_id ? `${place.osm_type}/${place.osm_id}` : null }; }
 
+/**
+ * Nominatim's bounded POI search is intentionally a fallback only. It gives
+ * the static app real nearby OSM venues when every public Overpass mirror is
+ * unavailable, without silently substituting sample restaurants.
+ */
+async function nearbyNominatimFallback(origin: GeoPoint, radiusKm: number): Promise<RawOsmRestaurant[]> {
+  const latDelta = radiusKm / 111;
+  const lngDelta = radiusKm / Math.max(1, 111 * Math.cos((origin.lat * Math.PI) / 180));
+  const viewbox = [origin.lng - lngDelta, origin.lat + latDelta, origin.lng + lngDelta, origin.lat - latDelta].join(",");
+  const params = new URLSearchParams({ format: "jsonv2", q: "restaurant", viewbox, bounded: "1", limit: "50", addressdetails: "1" });
+  const data = await nominatim(`/search?${params}`);
+  if (!Array.isArray(data)) return [];
+  return data.flatMap((place) => {
+    const lat = Number(place.lat); const lng = Number(place.lon);
+    const osmType = place.osm_type === "way" || place.osm_type === "relation" ? place.osm_type : "node";
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || !place.osm_id) return [];
+    const amenity = place.type || place.class || "restaurant";
+    return [{ osmId: `${osmType}/${place.osm_id}`, osmType, name: place.display_name.split(",")[0] || "Unnamed OSM venue", lat, lng, cuisine: null, amenity, foodType: typeFor({ amenity }), priceLevel: priceFor({ amenity }), priceLevelEstimated: true, address: place.display_name, openingHoursRaw: null, openNow: null, phone: null, website: null, wikidataId: null, imageUrl: null, imageSourceUrl: null, wheelchair: null, takeaway: null, delivery: null, outdoorSeating: null, parking: null, aiSummary: "Nearby venue returned by OpenStreetMap Nominatim." }];
+  });
+}
+
 export const osmPlaces = {
   async nearby(origin: GeoPoint, radiusKm: number): Promise<RawOsmRestaurant[]> {
     validate(origin); const radius = Math.max(100, Math.min(20_000, Math.round(radiusKm * 1000))); const key = `${origin.lat.toFixed(3)},${origin.lng.toFixed(3)}:${radius}`; const cached = nearbyCache.get(key); if (cached) return cached;
-    const results = (await overpass(query(origin, radius))).map(normalize).filter((item): item is RawOsmRestaurant => Boolean(item)); nearbyCache.set(key, results); return results;
+    try {
+      const results = (await overpass(query(origin, radius))).map(normalize).filter((item): item is RawOsmRestaurant => Boolean(item));
+      nearbyCache.set(key, results);
+      return results;
+    } catch {
+      const fallback = await nearbyNominatimFallback(origin, radius / 1000);
+      nearbyCache.set(key, fallback);
+      return fallback;
+    }
   },
   async search(queryText: string): Promise<LocationSuggestion[]> {
     const q = queryText.trim(); if (q.length < 2 || q.length > 200) return []; const key = q.toLowerCase(); const cached = searchCache.get(key); if (cached) return cached;
